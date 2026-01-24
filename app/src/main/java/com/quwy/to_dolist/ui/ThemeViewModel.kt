@@ -22,7 +22,7 @@ class ThemeViewModel(application: Application) : AndroidViewModel(application) {
     val dynamicColor: StateFlow<Boolean> = themeSettings.dynamicColor.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = false
+        initialValue = true
     )
 
     fun setTheme(theme: String) {

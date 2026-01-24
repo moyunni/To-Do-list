@@ -125,14 +125,13 @@ fun ToDoListScreen(viewModel: ToDoViewModel, navController: NavController) {
     Scaffold(
         containerColor = Color.Transparent,
         topBar = {
-            Column(modifier = Modifier.padding(horizontal = 16.dp).padding(top = 16.dp)) {
-                Row(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Задачи", color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold, fontSize = 28.sp)
-                    IconButton(onClick = { navController.navigate("settings") }) {
-                        Icon(Icons.Default.Settings, contentDescription = "Settings", tint = MaterialTheme.colorScheme.onBackground)
-                    }
-                }
-                SearchBar(value = searchQuery, onValueChange = { viewModel.onSearchQueryChange(it) })
+            Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 8.dp)) {
+                Text("Задачи", color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold, fontSize = 28.sp, modifier = Modifier.padding(bottom = 16.dp))
+                SearchBar(
+                    value = searchQuery,
+                    onValueChange = { viewModel.onSearchQueryChange(it) },
+                    onSettingsClick = { navController.navigate("settings") }
+                )
             }
         },
         floatingActionButton = {
@@ -171,13 +170,14 @@ fun ToDoListScreen(viewModel: ToDoViewModel, navController: NavController) {
 }
 
 @Composable
-fun SearchBar(value: String, onValueChange: (String) -> Unit) {
+fun SearchBar(value: String, onValueChange: (String) -> Unit, onSettingsClick: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
+            .border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f), RoundedCornerShape(50))
             .clip(RoundedCornerShape(50))
             .background(MaterialTheme.colorScheme.surface)
-            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .padding(horizontal = 16.dp, vertical = 4.dp)
     ) {
         BasicTextField(
             value = value,
@@ -196,6 +196,9 @@ fun SearchBar(value: String, onValueChange: (String) -> Unit) {
                         }
                         innerTextField()
                     }
+                    IconButton(onClick = onSettingsClick) {
+                        Icon(Icons.Default.Settings, contentDescription = "Settings", tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+                    }
                 }
             }
         )
@@ -206,7 +209,7 @@ fun SearchBar(value: String, onValueChange: (String) -> Unit) {
 fun ToDoItemCard(item: ToDoItem, onCheckedChange: (Boolean) -> Unit, onDelete: () -> Unit) {
     Card(
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
         Row(
             modifier = Modifier
@@ -225,7 +228,11 @@ fun ToDoItemCard(item: ToDoItem, onCheckedChange: (Boolean) -> Unit, onDelete: (
             )
             Column(modifier = Modifier.weight(1f).padding(start = 8.dp)) {
                 Text(text = item.title, color = MaterialTheme.colorScheme.onSurface, fontSize = 16.sp)
-                Text(text = item.priority.name, color = MaterialTheme.colorScheme.primary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(modifier = Modifier.size(8.dp).background(item.priority.color, CircleShape))
+                    Spacer(Modifier.size(4.dp))
+                    Text(text = item.priority.name, color = item.priority.color, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                }
             }
             IconButton(onClick = onDelete) {
                 Icon(Icons.Default.Delete, contentDescription = "Delete To-Do Item", tint = MaterialTheme.colorScheme.primary)
@@ -267,7 +274,7 @@ fun AddToDoItemDialog(onDismiss: () -> Unit, onConfirm: (String, Priority) -> Un
                         Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Select Priority")
                     }
                     DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                        Priority.values().forEach { prio ->
+                        Priority.entries.forEach { prio ->
                             DropdownMenuItem(text = { Text(prio.name) } , onClick = { 
                                 priority = prio
                                 expanded = false
@@ -343,19 +350,6 @@ fun SettingsScreen(navController: NavController) {
     }
 }
 
-@Composable
-fun SettingsCard(onClick: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
-    Card(
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f), RoundedCornerShape(20.dp))
-    ) {
-        Column {
-            content()
-        }
-    }
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ThemeSettingsScreen(navController: NavController, themeSettings: ThemeSettings) {
@@ -376,43 +370,60 @@ fun ThemeSettingsScreen(navController: NavController, themeSettings: ThemeSettin
             )
         }
     ) { paddingValues ->
-        Column(modifier = Modifier.padding(paddingValues).padding(horizontal = 16.dp)) {
+        Column(
+            modifier = Modifier.padding(paddingValues).padding(horizontal = 16.dp)
+        ) {
             Spacer(Modifier.height(16.dp))
-            Text("Тема", color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(start = 16.dp, bottom = 8.dp), fontWeight = FontWeight.Bold, fontSize = 14.sp)
-            Card(shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
-                Column(modifier = Modifier.padding(vertical = 8.dp)) {
-                    ThemeSettingItem(title = "Системная", selected = theme == "system") { coroutineScope.launch { themeSettings.setTheme("system") } }
-                    ThemeSettingItem(title = "Светлая", selected = theme == "light") { coroutineScope.launch { themeSettings.setTheme("light") } }
-                    ThemeSettingItem(title = "Темная", selected = theme == "dark") { coroutineScope.launch { themeSettings.setTheme("dark") } }
-                }
-            }
+            Text("Тема", color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(bottom = 8.dp), fontWeight = FontWeight.Bold)
+            ThemeSettingItem(text = "Системная", selected = theme == "system") { coroutineScope.launch { themeSettings.setTheme("system") } }
+            ThemeSettingItem(text = "Светлая", selected = theme == "light") { coroutineScope.launch { themeSettings.setTheme("light") } }
+            ThemeSettingItem(text = "Темная", selected = theme == "dark") { coroutineScope.launch { themeSettings.setTheme("dark") } }
         }
     }
 }
 
 @Composable
-fun ThemeSettingItem(title: String, selected: Boolean, onClick: () -> Unit) {
-    val backgroundColor = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f) else Color.Transparent
-    val textColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-
+fun ThemeSettingItem(text: String, selected: Boolean, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(backgroundColor)
+            .background(if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f) else Color.Transparent)
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 16.dp),
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(text = title, color = textColor, fontSize = 16.sp, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal)
+        Text(
+            text,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+            color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+        )
         if (selected) {
             Icon(
                 Icons.Default.Check,
                 contentDescription = "Selected",
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(24.dp)
+                tint = MaterialTheme.colorScheme.primary
             )
+        }
+    }
+}
+
+@Composable
+fun SettingsCard(
+    onClick: () -> Unit,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f), RoundedCornerShape(20.dp)),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        onClick = onClick
+    ) {
+        Column {
+            content()
         }
     }
 }
