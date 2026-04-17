@@ -16,5 +16,5 @@
 * **Поиск**: Быстрая фильтрация списка дел в реальном времени.
 
 ---
-**Разработчик**: [rawneko](https://rawneko.github.io/info)
-**Блог в Telegram**: [Rawneko_Room](https://t.me/rawneko_room)
+**Разработчик**: [moyunni](https://chinchilla.rnhost.ru)
+**Блог в Telegram**: [Moyunni_Room](https://t.me/moyunni_room)
